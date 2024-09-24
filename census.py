@@ -14,32 +14,39 @@ url = f"https://api.census.gov/data/2022/acs/acs5?get=NAME,B19013_001E&for=count
 # Fetch the data
 response = requests.get(url)
 
+# Print out the response content for debugging
+st.write("API Response Status Code:", response.status_code)
+st.write("API Response Content:", response.text)
+
 if response.status_code == 200:
-    # Parse the response
-    data = response.json()
+    try:
+        # Parse the response
+        data = response.json()
 
-    # Convert to a pandas DataFrame
-    columns = data[0]
-    rows = data[1:]
-    df = pd.DataFrame(rows, columns=columns)
+        # Convert to a pandas DataFrame
+        columns = data[0]
+        rows = data[1:]
+        df = pd.DataFrame(rows, columns=columns)
 
-    # Rename columns for clarity
-    df = df.rename(columns={"B19013_001E": "Median_Household_Income", "NAME": "County"})
+        # Rename columns for clarity
+        df = df.rename(columns={"B19013_001E": "Median_Household_Income", "NAME": "County"})
 
-    # Convert Median_Household_Income to a float
-    df["Median_Household_Income"] = pd.to_numeric(df["Median_Household_Income"], errors='coerce')
+        # Convert Median_Household_Income to a float
+        df["Median_Household_Income"] = pd.to_numeric(df["Median_Household_Income"], errors='coerce')
 
-    # Display the DataFrame in Streamlit
-    st.write("### Median Household Income Data for Maryland Counties:")
-    st.dataframe(df[["County", "Median_Household_Income"]])
+        # Display the DataFrame in Streamlit
+        st.write("### Median Household Income Data for Maryland Counties:")
+        st.dataframe(df[["County", "Median_Household_Income"]])
 
-    # Optional: Download as CSV
-    csv = df.to_csv(index=False)
-    st.download_button(
-        label="Download as CSV",
-        data=csv,
-        file_name='MD_Median_Household_Income_by_County.csv',
-        mime='text/csv'
-    )
+        # Optional: Download as CSV
+        csv = df.to_csv(index=False)
+        st.download_button(
+            label="Download as CSV",
+            data=csv,
+            file_name='MD_Median_Household_Income_by_County.csv',
+            mime='text/csv'
+        )
+    except ValueError:
+        st.error("Failed to parse the response as JSON.")
 else:
-    st.error("Error fetching data. Please check your API key or try again later.")
+    st.error("Failed to fetch data. Please check the API key and try again.")
